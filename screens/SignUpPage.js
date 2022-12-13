@@ -112,6 +112,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
       },
       btnContainer: {
+        fontFamily: "Trebuchet MS",
         backgroundColor: "white",
         height: 40,
         position: "absolute",
