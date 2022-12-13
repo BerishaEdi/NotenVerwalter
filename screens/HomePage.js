@@ -105,7 +105,7 @@ const HomePage = () => {
             })
             .then((docRef) => {
                 setDocId(docRef.id);
-                console.log("Document written with ID: ", docRef.id);
+                console.log("Document written with Id: ", docRef.id);
             })
             .catch((error) => {
                 console.error("Error adding document: ", error);
