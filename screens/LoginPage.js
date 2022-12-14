@@ -24,6 +24,7 @@ const LoginPage = () => {
     navi.navigate("SignUp")
   }
 
+  /* Login Funktion von: https://firebase.google.com/docs/auth/web/password-auth */
   const handleLogin = () => {
     auth
       .signInWithEmailAndPassword(email, password)

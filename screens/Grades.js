@@ -34,7 +34,6 @@ const Grades = () => {
 
 
     const addGrade = () => {
-
         if (grade != null) {
             console.log(grade + " hfhfhf")
             gradesArray.push(grade)
@@ -161,8 +160,9 @@ const Grades = () => {
             console.error("Error removing document: ", error);
         });
     
-
     }
+
+
 
 
 

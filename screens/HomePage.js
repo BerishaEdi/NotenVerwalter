@@ -32,6 +32,7 @@ const HomePage = () => {
     const [subjectId, setSubjectId] = useState("0")
 
 
+    /* abmelden Funktion */
     const SignOut = () => {
         auth
             .signOut()
@@ -119,7 +120,6 @@ const HomePage = () => {
         DeviceMotion.addListener(data => {
             const { acceleration } = data;
             if (acceleration.x > 35 || acceleration.y > 35 || acceleration.z > 35) {
-              console.log("navigating to Log In");
               SignOut()
               navi.navigate('Login');
             } 
@@ -132,7 +132,7 @@ const HomePage = () => {
 
 
 
-
+/* fach in die datenbank einfügen */
     const addSubject = () => {
         if(subject != null){
         setSubjectArray([]);
