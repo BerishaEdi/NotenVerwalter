@@ -13,7 +13,8 @@ const Stack = createNativeStackNavigator();
 
 
 const { setGlobalState, useGlobalState } = createGlobalState({
-    docId: null
+    docId: null,
+    subjectsAvergae: null
   })
 
 

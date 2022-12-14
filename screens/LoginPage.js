@@ -109,7 +109,6 @@ const styles = StyleSheet.create({
   },
   btnContainer: {
     fontFamily: "Trebuchet MS",
-    backgroundColor: "white",
     height: 40,
     position: "absolute",
     bottom: "5%",

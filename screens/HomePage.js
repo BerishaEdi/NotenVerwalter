@@ -10,6 +10,7 @@ import {
     SafeAreaView,
     TextInput,
     KeyboardAvoidingView,
+    Alert
 
 } from "react-native";
 import React, { useEffect, useState } from "react";
@@ -17,33 +18,30 @@ import { auth, db } from "../firebase";
 import * as firebase from "firebase";
 import { useNavigation } from "@react-navigation/core";
 import DialogInput from 'react-native-dialog-input';
-import { useGlobalState, setGlobalState } from '../App'
-
+import { useGlobalState, setGlobalState } from '../App';
+import { DeviceMotion } from 'expo-sensors';
 
 const HomePage = () => {
     const navi = useNavigation();
     const dbRef = db.collection("users");
-    const [username, setUsername] = useState("");
-    const [subject, setSubject] = useState("Fachname");
+    const [username, setUsername] = useState("")
+    const [subject, setSubject] = useState()
     const [uid, setUid] = useState();
-    const [docId, setDocId] = useState()
-    const [docIdGrades, setDocIdGrades] = useState();
     const [subjectArray, setSubjectArray] = useState([]);
-    const [grade, setGrade] = useState();
     const [gradesArray, setGradesArray] = useState([]);
     const [subjectId, setSubjectId] = useState("0")
 
-
-
-    const [visible, setVisible] = useState(false);
-    const [input, setInput] = useState('');
 
     const SignOut = () => {
         auth
             .signOut()
             .then(() => {
-                setUsername("");
-                setUid("");
+                setUsername();
+                setUid();
+                setSubject()
+                setGradesArray([])
+                setSubjectArray([])
+                setSubjectId()
                 navi.replace("Login");
             })
             .catch((error) => alert(error.message));
@@ -54,6 +52,8 @@ const HomePage = () => {
         setGlobalState("docId", id)
         navi.navigate("Grades");
     }
+
+
 
     const loadContent = () => {
         /* daten lesen methode von: https://firebase.google.com/docs/firestore/query-data/get-data */
@@ -70,6 +70,8 @@ const HomePage = () => {
                     console.log("kein solches Dokument");
                 }
             });
+
+
 
 
         /* alle fächer von datenbank lesen und in array speichern */
@@ -106,15 +108,33 @@ const HomePage = () => {
         if (user) {
             console.log("Hallo user mit id: " + user.uid);
             setUid(firebase.auth().currentUser.uid);
-            loadContent();
-            loadGrades()
+            loadContent()
+            calculateSubjectAverage()
+            console.log(gradesArray)
         } else {
             console.log("kein nutzer");
         }
+
+/* Sensor der erkennt falls das gerät geschütelt wird, leitet dann user zum login zurück: https://docs.expo.dev/versions/latest/sdk/devicemotion/ */
+        DeviceMotion.addListener(data => {
+            const { acceleration } = data;
+            if (acceleration.x > 35 || acceleration.y > 35 || acceleration.z > 35) {
+              console.log("navigating to Log In");
+              SignOut()
+              navi.navigate('Login');
+            } 
+          });
+
+
+
+
     }, []);
 
 
+
+
     const addSubject = () => {
+        if(subject != null){
         setSubjectArray([]);
         db.collection("subjects")
             .add({
@@ -122,20 +142,52 @@ const HomePage = () => {
                 uid: uid,
             })
             .then((docRef) => {
-                setDocId(docRef.id);
                 console.log("Document written with Id: ", docRef.id);
             })
             .catch((error) => {
                 console.error("Error adding document: ", error);
             });
         loadContent()
+        }else {
+            popUpAlert()
+        }
     };
 
 
-    const loadGrades = () => {
-        setGradesArray([])
+    const popUpAlert = () =>
+        /* Quelle für Alert: https://reactnative.dev/docs/alert */
+        Alert.alert(
+            "Fehlerhafte Eingabe",
+            "Geben sie bitte einen gültigen Wert ein",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                { text: "OK", }
+            ]
+        );
 
-        db.collection("grades")
+
+
+        
+
+
+
+    const renderSubject = ({ item }) => (
+        <View style={{ marginBottom: 15 }}>
+            <TouchableOpacity onPress={() => goToGrades(item.id)}>
+                <Text style={{ fontSize: "30", fontweight: "normal", color: "Black" }}>{item.subject}</Text>
+            </TouchableOpacity>
+
+        </View>
+    );
+
+
+
+
+    const calculateSubjectAverage = () => {
+        db.collection("subjects")
             .where("uid", "==", firebase.auth().currentUser.uid)
             .get()
             .then((querySnapshot) => {
@@ -143,8 +195,8 @@ const HomePage = () => {
                     setGradesArray((current) => [
                         ...current,
                         {
-                            sid: doc.data().sid,
-                            grade: doc.data(),
+                            gradesList: doc.data().grades,
+                            name: doc.data().subjectName,
                         },
                     ]);
                 });
@@ -152,19 +204,9 @@ const HomePage = () => {
             .catch((error) => {
                 console.log("Error getting documents: ", error);
             });
-
     }
 
 
-    const renderSubject = ({ item }) => (
-
-        <View style={{ marginBottom: 15 }}>
-            <TouchableOpacity onPress={() => goToGrades(item.id)}>
-                <Text style={{ fontSize: "30", fontweight: "normal", color: "Black" }}>{item.subject}</Text>
-            </TouchableOpacity>
-
-        </View>
-);
 
     return (
         <SafeAreaView style={styles.content}>
@@ -176,9 +218,15 @@ const HomePage = () => {
                 placeholder="Fach"
             />
             <View style={styles.btnContainer}>
-                <Button title="Hinzufügen" color="white" onPress={addSubject} />
+                <Button style={styles.logOutButton} title="Hinzufügen" color="white" onPress={addSubject} />
             </View>
-            <Button color="black" title="Abmelden" onPress={SignOut} />
+            <View style={styles.logOutButton}>
+                <Button color="white" title="Abmelden" onPress={SignOut} />
+            </View>
+            <View style={styles.average}>
+                <Text>Dein Aktueller Schnitt ist </Text>
+                <Text style={{ textAlign: "center" }}>Schnitt</Text>
+            </View>
             <FlatList
                 data={subjectArray}
                 renderItem={renderSubject}
@@ -201,7 +249,7 @@ const styles = StyleSheet.create({
     button: {
         fontFamily: "Trebuchet MS",
         marginTop: 40,
-        backgroundColor: "#5DB075",
+        backgroundColor: "Black",
         width: "60%",
         padding: 15,
         borderRadius: 15,
@@ -226,6 +274,7 @@ const styles = StyleSheet.create({
     welcome: {
         fontFamily: "Trebuchet MS",
         alignSelf: "center",
+        fontSize: "20",
         marginBottom: 30,
     },
     input: {
@@ -239,13 +288,27 @@ const styles = StyleSheet.create({
     },
     btnContainer: {
         fontFamily: "Trebuchet MS",
-        backgroundColor: "white",
+        backgroundColor: "black",
         height: 50,
         width: "50%",
         alignSelf: "center",
-        backgroundColor: "#5DB075",
         borderRadius: 20,
         marginTop: 10,
         justifyContent: "center",
     },
+    average: {
+        textAlign: "center",
+        justifyContent: "center",
+        alignSelf: "center",
+        marginBottom: "10%",
+    },
+    logOutButton: {
+        margin: "3%",
+        justifyContent: "center",
+        backgroundColor: "black",
+        width: "30%",
+        alignSelf: "center",
+        borderRadius: 20,
+        height: 50,
+    }
 });
