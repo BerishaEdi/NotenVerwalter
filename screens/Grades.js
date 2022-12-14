@@ -21,10 +21,6 @@ import { useGlobalState, setGlobalState } from '../App'
 
 
 
-
-
-
-
 const Grades = () => {
 
 
@@ -38,6 +34,22 @@ const Grades = () => {
 
     const addGrade = () => {
 
+        console.log(grade+" hfhfhf")
+        /* setGradesArray(items.push(grade)); */
+        setGradesArray([...gradesArray, 'new value']);
+        console.log(gradesArray+"hfhfhf")
+        db.collection("subjects")
+            .doc(globalKey)
+            .update({
+                grades: gradesArray,
+            })
+            .then((docRef) => {
+                console.log("GDocument written with Id:");
+            })
+            .catch((error) => {
+                console.error("Error adding Gdocument: ", error);
+            });
+        loadContent()
 
     }
 
@@ -81,16 +93,16 @@ const Grades = () => {
                     console.log("kein solches Dokument");
                 }
             });
-        
+
 
     }, [])
 
 
-     const renderGrades = ({ item }) => (
-         <View style={{ marginBottom: 5 }}>
-             <Text style={{ fontSize: "25", fontweight: "normal", color: "black", textAlign: "center"}}>{item}</Text>
-         </View>
-     );
+    const renderGrades = ({ item }) => (
+        <View style={{ marginBottom: 5 }}>
+            <Text style={{ fontSize: "25", fontweight: "normal", color: "black", textAlign: "center" }}>{item}</Text>
+        </View>
+    );
 
 
 
@@ -107,7 +119,7 @@ const Grades = () => {
                         value={grade}
                         onChangeText={text => setGrade(text)}
                         style={styles.inputField}
-                        keyboardType = 'numeric'
+                        keyboardType='numeric'
                     />
                     <View style={styles.btnContainer}>
                         <Button

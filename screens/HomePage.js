@@ -95,10 +95,13 @@ const HomePage = () => {
 
     };
 
+
+
     useEffect(() => {
         setSubjectArray([]);
         setGradesArray([]);
 
+        /* überprüft ob und welcher user angemeldet ist */
         const user = firebase.auth().currentUser;
         if (user) {
             console.log("Hallo user mit id: " + user.uid);
@@ -158,45 +161,10 @@ const HomePage = () => {
         <View style={{ marginBottom: 15 }}>
             <TouchableOpacity onPress={() => goToGrades(item.id)}>
                 <Text style={{ fontSize: "30", fontweight: "normal", color: "Black" }}>{item.subject}</Text>
-                {/* Quelle DialogInput: https://www.nicesnippets.com/blog/how-to-create-alert-with-textinput-in-react-native */}
-                {/* <DialogInput
-                    isDialogVisible={visible}
-                    submitInput={(inputText) => {
-                            setVisible(false),
-                            setSubjectId(item.id)
-
-
-                        db.collection("subjects")
-                            .where("uid", "==", firebase.auth().currentUser.uid)
-                            .add({
-                                l: inputText
-                            })
-                            .then((docRef) => {
-                                setDocIdGrades(docRef.id);
-                                console.log("GDocument written with Id: ", docRef.id);
-                            })
-                            .catch((error) => {
-                                console.error("Error adding Gdocument: ", error);
-                            });
-
-                    }}
-                    closeDialog={() => setVisible(false)}>
-                </DialogInput> */}
             </TouchableOpacity>
 
         </View>
 );
-
-
-
-    /*  const renderItemGrades = ({ item }) => (
-         <View style={{ marginBottom: 5 }}>
-             <Text style={{ fontSize: "25", fontweight: "normal", color: "black" }}>{item.grade}</Text>
-         </View>
-     ); */
-
-
-
 
     return (
         <SafeAreaView style={styles.content}>
