@@ -10,12 +10,15 @@ import {
     SafeAreaView,
     TextInput,
     KeyboardAvoidingView,
+
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import * as firebase from "firebase";
 import { useNavigation } from "@react-navigation/core";
 import DialogInput from 'react-native-dialog-input';
+import { useGlobalState, setGlobalState } from '../App'
+
 
 const HomePage = () => {
     const navi = useNavigation();
@@ -28,6 +31,7 @@ const HomePage = () => {
     const [subjectArray, setSubjectArray] = useState([]);
     const [grade, setGrade] = useState();
     const [gradesArray, setGradesArray] = useState([]);
+    const [subjectId, setSubjectId] = useState("0")
 
 
 
@@ -45,8 +49,16 @@ const HomePage = () => {
             .catch((error) => alert(error.message));
     };
 
+
+    const goToGrades = (id) => {
+        setGlobalState("docId", id)
+        navi.navigate("Grades");
+    }
+
     const loadContent = () => {
-        /* Daten Lesen Methode von: https://firebase.google.com/docs/firestore/query-data/get-data */
+        /* daten lesen methode von: https://firebase.google.com/docs/firestore/query-data/get-data */
+
+        /* username von datenbank lesen */
         dbRef
             .doc(firebase.auth().currentUser.uid)
             .get()
@@ -59,6 +71,8 @@ const HomePage = () => {
                 }
             });
 
+
+        /* alle fächer von datenbank lesen und in array speichern */
         db.collection("subjects")
             .where("uid", "==", firebase.auth().currentUser.uid)
             .get()
@@ -78,22 +92,27 @@ const HomePage = () => {
             });
 
         console.log(subjectArray);
+
     };
 
     useEffect(() => {
         setSubjectArray([]);
+        setGradesArray([]);
 
         const user = firebase.auth().currentUser;
         if (user) {
             console.log("Hallo user mit id: " + user.uid);
             setUid(firebase.auth().currentUser.uid);
             loadContent();
+            loadGrades()
         } else {
             console.log("kein nutzer");
         }
     }, []);
 
+
     const addSubject = () => {
+        setSubjectArray([]);
         db.collection("subjects")
             .add({
                 subjectName: subject,
@@ -106,33 +125,23 @@ const HomePage = () => {
             .catch((error) => {
                 console.error("Error adding document: ", error);
             });
-
-        /* setSubjectArray((current) => [
-          ...current,
-          {
-            id: docId,
-            grade: grade,
-          },
-        ]); */
-
-
-
-        setSubject();
-        console.log(gradesArray);
+        loadContent()
     };
 
 
     const loadGrades = () => {
+        setGradesArray([])
+
         db.collection("grades")
-            .where("id", "==", docId)
+            .where("uid", "==", firebase.auth().currentUser.uid)
             .get()
             .then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
                     setGradesArray((current) => [
                         ...current,
                         {
-                            id: docId,
-                            grade: doc.data().grade,
+                            sid: doc.data().sid,
+                            grade: doc.data(),
                         },
                     ]);
                 });
@@ -141,80 +150,50 @@ const HomePage = () => {
                 console.log("Error getting documents: ", error);
             });
 
-        console.log(subjectArray);
     }
 
 
-    const addGrades = (id) => {
-
-        db.collection("grades")
-            .add({
-                grade: grade,
-                uid: uid,
-                id: id
-            })
-            .then((docRef) => {
-                setDocIdGrades(docRef.id);
-                console.log("GDocument written with Id: ", docRef.id);
-            })
-            .catch((error) => {
-                console.error("Error adding Gdocument: ", error);
-            });
-
-        setGradesArray((current) => [
-            ...current,
-            {
-                id: docId,
-                grade: grade,
-            },
-        ]);
-
-
-        console.log(gradesArray);
-    };
-
-
-
-
-    const renderItem = ({ item }) => (
-        console.log(item.id + "blalbalbl"),
-        console.log(gradesArray),
+    const renderSubject = ({ item }) => (
 
         <View style={{ marginBottom: 15 }}>
-            <TouchableOpacity onPress={() => setVisible(true)}>
+            <TouchableOpacity onPress={() => goToGrades(item.id)}>
                 <Text style={{ fontSize: "30", fontweight: "normal", color: "Black" }}>{item.subject}</Text>
                 {/* Quelle DialogInput: https://www.nicesnippets.com/blog/how-to-create-alert-with-textinput-in-react-native */}
-                <DialogInput
+                {/* <DialogInput
                     isDialogVisible={visible}
-                    title={"Gib deine Note ein"}
-                    hintInput={"Enter Text"}
                     submitInput={(inputText) => {
-                        setGrade(inputText),
-                        setVisible(false),
+                            setVisible(false),
+                            setSubjectId(item.id)
 
-                        addGrades(item.id)
+
+                        db.collection("subjects")
+                            .where("uid", "==", firebase.auth().currentUser.uid)
+                            .add({
+                                l: inputText
+                            })
+                            .then((docRef) => {
+                                setDocIdGrades(docRef.id);
+                                console.log("GDocument written with Id: ", docRef.id);
+                            })
+                            .catch((error) => {
+                                console.error("Error adding Gdocument: ", error);
+                            });
+
                     }}
                     closeDialog={() => setVisible(false)}>
-                </DialogInput>
+                </DialogInput> */}
             </TouchableOpacity>
-            <FlatList
-                data={gradesArray}
-                renderItem={renderItemGrades}
-                keyExtractor={(item) => item.id}
-                
-            />
+
         </View>
-    );
+);
 
 
 
-    const renderItemGrades = ({ item }) => (
-        loadGrades(),
-        <View style={{ marginBottom: 5 }}>
-            <Text style={{ fontSize: "25", fontweight: "normal" }}>{item.grade}</Text>
-        </View>,
-        setGradesArray([])
-    );
+    /*  const renderItemGrades = ({ item }) => (
+         <View style={{ marginBottom: 5 }}>
+             <Text style={{ fontSize: "25", fontweight: "normal", color: "black" }}>{item.grade}</Text>
+         </View>
+     ); */
 
 
 
@@ -234,7 +213,7 @@ const HomePage = () => {
             <Button color="black" title="Abmelden" onPress={SignOut} />
             <FlatList
                 data={subjectArray}
-                renderItem={renderItem}
+                renderItem={renderSubject}
                 keyExtractor={(item) => item.id}
             />
         </SafeAreaView>
