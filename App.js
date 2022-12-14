@@ -5,9 +5,20 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginPage from './screens/LoginPage';
 import HomePage from './screens/HomePage';
 import SignUpPage from './screens/SignUpPage';
+import GradesPage from './screens/Grades';
+import { createGlobalState } from 'react-hooks-global-state'
 
 /* Stacknavigator Quelle von Docs: https://reactnavigation.org/docs/getting-started/ */
 const Stack = createNativeStackNavigator();
+
+
+const { setGlobalState, useGlobalState } = createGlobalState({
+    docId: null
+  })
+
+
+export { useGlobalState, setGlobalState}
+
 
 export default function App() {
   return (
@@ -16,6 +27,7 @@ export default function App() {
         <Stack.Screen options={{ headerShown: false }} name="Login" component={LoginPage} />
         <Stack.Screen options={{ headerShown: false }} name="SignUp" component={SignUpPage} />
         <Stack.Screen options={{ headerShown: false }} name="Home" component={HomePage} />
+        <Stack.Screen name="Grades" component={GradesPage} />
       </Stack.Navigator>
     </NavigationContainer>
   )
